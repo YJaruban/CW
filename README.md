@@ -12,8 +12,9 @@ CM2604 Machine Learning coursework (Part 01). The project predicts whether a tel
 
 | Path | Contents |
 |---|---|
-| `churn.ipynb` | Full workflow: cleaning, EDA, preprocessing, model training, tuning, evaluation, feature engineering and fairness checks |
+| `churn.ipynb` | Full workflow: cleaning, EDA, preprocessing, model training, tuning, evaluation, feature engineering, fairness checks, threshold tuning, explainability and model saving |
 | `figures/` | Charts used in the report, plus `results_table.csv` |
+| `models/` | Saved final model (tuned Random Forest + decision threshold) |
 | `requirements.txt` | Python packages and versions used |
 
 ## How to run
@@ -37,6 +38,9 @@ Open `churn.ipynb` in VS Code or Jupyter, select the `venv` kernel and click **R
 5. **Experiment 2:** hyperparameter tuning with `GridSearchCV` (5-fold stratified cross-validation, scored on F1).
 6. **Experiment 3:** engineered features (`NumServices`, `TenureGroup`) compared against the original features.
 7. **Fairness checks:** model behaviour compared across gender and senior-citizen groups.
+8. **Threshold tuning:** the decision cut-off chosen from cross-validated predictions on the training set.
+9. **Explainability:** Logistic Regression coefficients and Random Forest feature importance.
+10. **Saved model:** the final pipeline and its threshold saved with `joblib` and reloaded to score unseen customers.
 
 F1, recall and ROC-AUC are used instead of accuracy alone because of the class imbalance.
 
@@ -48,7 +52,19 @@ F1, recall and ROC-AUC are used instead of accuracy alone because of the class i
 | Logistic Regression | 0.741 | 0.508 | 0.786 | 0.617 | 0.841 |
 | **Random Forest** | 0.754 | 0.525 | **0.791** | **0.631** | **0.844** |
 
-The tuned Random Forest performs best. The full table, including default settings, is in `figures/results_table.csv`.
+The tuned Random Forest performs best. The full table, including default settings, is in `figures/results_table.csv`. With its decision threshold tuned to 0.55, the Random Forest reaches an F1 of 0.641 on the test set.
+
+## Using the saved model
+
+```python
+import joblib
+
+saved = joblib.load("models/churn_random_forest.joblib")
+prob = saved["model"].predict_proba(new_customers)[:, 1]
+will_churn = prob >= saved["threshold"]
+```
+
+`new_customers` must have the same 19 input columns as the training data (every column except `customerID` and `Churn`), cleaned the same way as in the notebook. Load the model with the scikit-learn version in `requirements.txt`.
 
 ## Author
 
